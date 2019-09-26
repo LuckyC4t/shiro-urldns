@@ -38,9 +38,9 @@ public class URLDNS {
             con.setRequestMethod("GET");
             con.setRequestProperty("Cookie", "rememberMe="+rememberMe);
             if (con.getResponseCode() == 200) {
-                System.out.println("send key"+i+" success");
+                System.out.println("send "+keys[i]);
             } else {
-                System.out.println("send key"+i+" failed");
+                System.out.println("send key failed");
             }
 
         }
