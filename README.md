@@ -15,3 +15,5 @@
 https://github.com/frohoff/ysoserial
 
 https://blog.paranoidsoftware.com/triggering-a-dns-lookup-using-java-deserialization/
+
+https://github.com/sv3nbeast/ShiroScan
